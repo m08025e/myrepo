@@ -1,0 +1,3 @@
+kubectl explain replicaset   → app/v1
+
+kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml
