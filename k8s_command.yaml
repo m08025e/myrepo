@@ -32,6 +32,10 @@ kubectl run --help
 kubectl expose redis --port 6379 --name redis-service
 kubectl create deployment webapp --image=kodekloud/webapp-color --replicas=3
 kubectl run custom-nginx --image=nginx --port=8080
+kubectl create namespace dev-ns
+kubectl create deployment redis-deploy --namespace=dev-ns --image=redis --replicas=2
+kubectl run httpd --image=httpd:alpine --port=80 --expose=true
+
 
 
 
