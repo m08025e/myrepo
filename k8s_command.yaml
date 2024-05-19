@@ -10,4 +10,33 @@ db-service.dev.svc.cluster.local #違う名前空間のサービスを呼び出�
 kubectl run nginx --image=nginx
 kubectl run nginx --image=nginx --dry-run=client -o yaml
 
+#create a deployment
+kubectl create deployment --image=nginx nginx
+
+#generate deployment yaml file. Don't create it.
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml
+
+#generate deployment with 4 replicas
+kubectl create deployment nginx --image=nginx --replicas=4
+
+#scale replicas
+kubectl scale deployment nginx --replicas=4
+
+#create service
+kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml
+kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml
+
+kubectl run nginx-pod --image=nginx:alpine
+kubectl run redis --image=redis:alpine --labels="tier=db"
+kubectl run --help
+kubectl expose redis --port 6379 --name redis-service
+kubectl create deployment webapp --image=kodekloud/webapp-color --replicas=3
+kubectl run custom-nginx --image=nginx --port=8080
+
+
+
+
+
+
+
 
