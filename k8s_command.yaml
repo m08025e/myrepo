@@ -2,3 +2,12 @@ kubectl explain replicaset   → app/v1
 
 kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml
 
+kubectl get pod -A
+kubectl get ns
+kubectl get svc -n=maketing
+db-service.dev.svc.cluster.local #違う名前空間のサービスを呼び出す
+
+kubectl run nginx --image=nginx
+kubectl run nginx --image=nginx --dry-run=client -o yaml
+
+
