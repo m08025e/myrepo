@@ -1,0 +1,39 @@
+graph TD
+    A[d3-gantt-chart/]
+    A --> B[frontend/]
+    A --> C[backend/]
+    A --> D[docker-compose.yml]
+    A --> E[README.md]
+    A --> F[setup.sh]
+    
+    B --> G[public/]
+    B --> H[src/]
+    B --> I[package.json]
+    B --> J[vue.config.js]
+    B --> K[Dockerfile]
+    
+    H --> L[components/]
+    H --> M[App.vue]
+    H --> N[main.js]
+    
+    L --> O[GanttChart.vue]
+    
+    C --> P[src/]
+    C --> Q[build.gradle]
+    C --> R[Dockerfile]
+    C --> S[gradlew]
+    C --> T[gradlew.bat]
+    
+    P --> U[main/]
+    P --> V[test/]
+    
+    U --> W[java/]
+    U --> X[resources/]
+    
+    W --> Y[com/example/ganttchart/]
+    
+    Y --> Z[controller/]
+    Y --> AA[model/]
+    Y --> AB[repository/]
+    Y --> AC[service/]
+    Y --> AD[GanttChartApplication.java]
