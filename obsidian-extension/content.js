@@ -1,9 +1,15 @@
 function getLatestAnswer() {
-  const chatGPT = document.querySelector("div.markdown");
-  if (chatGPT) return chatGPT.innerText;
+  const chatGPTBlocks = document.querySelectorAll('div.markdown');
+  const chatGPT = chatGPTBlocks[chatGPTBlocks.length - 1];
+  if (chatGPT) return chatGPT.innerText.trim();
 
-  const claude = document.querySelector('[data-testid="bot-message-content"]');
-  if (claude) return claude.innerText;
+  // Claude's answer container uses the `font-claude-response` class
+  const claudeBlocks = document.querySelectorAll('.font-claude-response');
+  const claude = claudeBlocks[claudeBlocks.length - 1];
+  if (claude) {
+    const content = claude.querySelector('.grid') || claude;
+    return content.innerText.trim();
+  }
 
   return null;
 }
