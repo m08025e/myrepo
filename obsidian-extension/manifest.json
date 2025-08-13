@@ -1,20 +1,13 @@
 {
-  "name": "LLM to Obsidian",
-  "description": "Save ChatGPT and Claude outputs to Obsidian",
-  "version": "0.1",
   "manifest_version": 3,
-  "permissions": ["scripting", "activeTab"],
-  "background": { "service_worker": "background.js" },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://chat.openai.com/*",
-        "https://claude.ai/*"
-      ],
-      "js": ["content.js"]
-    }
-  ],
+  "name": "LLM to Obsidian",
+  "version": "0.2",
+  "description": "Send ChatGPT or Claude output to Obsidian",
+  "permissions": ["activeTab", "scripting"],
   "action": {
-    "default_title": "Save to Obsidian"
+    "default_title": "Send to Obsidian"
+  },
+  "background": {
+    "service_worker": "background.js"
   }
 }
