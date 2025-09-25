@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Modern Gantt Chart (Final Design)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366F1; /* Indigo 500 */
+            --primary-light: #C7D2FE; /* Indigo 200 */
+            --secondary-color: #4B5563; /* Gray 700 */
+            --background-light: #F9FAFB; /* Gray 50 */
+            --text-color-dark: #1F2937; /* Gray 900 */
+            --text-color-light: #6B7280; /* Gray 500 */
+            --border-color: #E5E7EB; /* Gray 200 */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            margin: 0; 
+            padding: 20px; 
+            background-color: var(--background-light);
+            color: var(--text-color-dark);
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--text-color-dark);
+        }
+
+        .controls { 
+            margin-bottom: 20px; 
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .controls button { 
+            padding: 10px 18px; 
+            font-size: 0.95rem; 
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: white;
+            color: var(--text-color-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .controls button:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .controls button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .chart-scroll-container {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-sizing: border-box;
+            background-color: white;
+            box-shadow: var(--shadow-md);
+            padding: 15px;
+        }
+
+        .svg-container { font-size: 0.85rem; }
+        
+        .item-group {
+            transition: transform 0.15s ease, filter 0.15s ease;
+            cursor: pointer;
+        }
+        .item-group:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .pre-rect  { fill: #DBEAFE; stroke: #60A5FA; stroke-width: 1.2; }
+        .main-rect { fill: #BFDBFE; stroke: #3B82F6; stroke-width: 1.2; }
+        .post-rect { fill: #93C5FD; stroke: #2563EB; stroke-width: 1.2; }
+        .port-rect { fill: #A78BFA; stroke: #7C3AED; stroke-width: 1; }
+        
+        .link-line { 
+            stroke: var(--text-color-light); 
+            stroke-width: 1.5; 
+            fill: none;
+            stroke-dasharray: 4 4;
+        }
+
+        .axis line, .axis path {
+            stroke: var(--border-color);
+            stroke-width: 1;
+        }
+        .axis text {
+            fill: var(--text-color-light);
+        }
+        
+        .x-axis .domain { stroke-width: 0; }
+        .y-axis .domain { stroke-width: 0; }
+        .y-axis .tick line { stroke-width: 0; }
+        .y-axis .tick text { font-weight: 500; }
+
+        /* ★変更点: 縦のグリッド線を点線から薄い実線に変更 */
+        .grid-lines line {
+            stroke: var(--border-color);
+            stroke-dasharray: none; /* 実線にする */
+            opacity: 0.7;
+        }
+        .grid-lines path {
+            stroke-width: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>生産スケジュール</h1>
+    <div class="controls">
+        <button id="zoom-1h">1時間</button>
+        <button id="zoom-4h">4時間</button>
+        <button id="zoom-8h">8時間</button>
+        <button id="zoom-all" class="active">全体</button>
+    </div>
+    <div id="chart" class="chart-scroll-container"></div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/d3-time-format.v3.min.js"></script>
+
+    <script>
+        // --- データ定義 (前回と同じ) ---
+        const equipment = ["設備A", "設備B", "設備C", "設備D"];
+        const chartItems = [
+            { id: 'J1-in',  jobId: 'Job1', type: 'port-in',  equipment: "設備A", startTime: new Date("2025-09-26T09:00:00"), endTime: new Date("2025-09-26T09:05:00") },
+            { id: 'J1-pre', jobId: 'Job1', type: 'pre',  equipment: "設備A", startTime: new Date("2025-09-26T09:05:00"), endTime: new Date("2025-09-26T09:20:00") },
+            { id: 'J1-main',jobId: 'Job1', type: 'main', equipment: "設備A", startTime: new Date("2025-09-26T09:20:00"), endTime: new Date("2025-09-26T10:00:00") },
+            { id: 'J1-post',jobId: 'Job1', type: 'post', equipment: "設備A", startTime: new Date("2025-09-26T10:00:00"), endTime: new Date("2025-09-26T10:10:00") },
+            { id: 'J1-out', jobId: 'Job1', type: 'port-out', equipment: "設備A", startTime: new Date("2025-09-26T10:10:00"), endTime: new Date("2025-09-26T10:15:00") },
+            { id: 'J2-in',  jobId: 'Job2', type: 'port-in',  equipment: "設備B", startTime: new Date("2025-09-26T10:30:00"), endTime: new Date("2025-09-26T10:35:00") },
+            { id: 'J2-pre', jobId: 'Job2', type: 'pre',  equipment: "設備B", startTime: new Date("2025-09-26T10:35:00"), endTime: new Date("2025-09-26T10:45:00") },
+            { id: 'J2-main',jobId: 'Job2', type: 'main', equipment: "設備B", startTime: new Date("2025-09-26T10:45:00"), endTime: new Date("2025-09-26T11:45:00") },
+            { id: 'J2-post',jobId: 'Job2', type: 'post', equipment: "設備B", startTime: new Date("2025-09-26T11:45:00"), endTime: new Date("2025-09-26T11:55:00") },
+            { id: 'J2-out', jobId: 'Job2', type: 'port-out', equipment: "設備B", startTime: new Date("2025-09-26T11:55:00"), endTime: new Date("2025-09-26T12:00:00") },
+            { id: 'J3-in',  jobId: 'Job3', type: 'port-in',  equipment: "設備C", startTime: new Date("2025-09-26T11:00:00"), endTime: new Date("2025-09-26T11:05:00") },
+            { id: 'J3-pre', jobId: 'Job3', type: 'pre',  equipment: "設備C", startTime: new Date("2025-09-26T11:05:00"), endTime: new Date("2025-09-26T11:15:00") },
+            { id: 'J3-main',jobId: 'Job3', type: 'main', equipment: "設備C", startTime: new Date("2025-09-26T11:15:00"), endTime: new Date("2025-09-26T12:30:00") },
+            { id: 'J3-post',jobId: 'Job3', type: 'post', equipment: "設備C", startTime: new Date("2025-09-26T12:30:00"), endTime: new Date("2025-09-26T12:40:00") },
+            { id: 'J3-out', jobId: 'Job3', type: 'port-out', equipment: "設備C", startTime: new Date("2025-09-26T12:40:00"), endTime: new Date("2025-09-26T12:45:00") },
+        ];
+        const links = [ 
+            { source: 'J1-out', target: 'J2-in' },
+            { source: 'J2-out', target: 'J3-in' }
+        ];
+        const itemsById = new Map(chartItems.map(d => [d.id, d]));
+
+        function drawChart(timeSpan) {
+            d3.select("#chart").selectAll("svg").remove();
+
+            const container = d3.select("#chart").node();
+            const visibleWidth = container.getBoundingClientRect().width - 30;
+            
+            const margin = { top: 20, right: 30, bottom: 40, left: 80 };
+            const height = 300 - margin.top - margin.bottom;
+            
+            const svgTotalWidth = timeSpan === 'all' ? 1800 : visibleWidth;
+            const width = svgTotalWidth - margin.left - margin.right;
+            
+            const portHeight = 12; 
+            const rowPadding = 0.4;
+
+            const yScale = d3.scaleBand().domain(equipment).range([0, height]).padding(rowPadding);
+            const xScale = d3.scaleTime().range([0, width]);
+
+            const minTimeGlobal = d3.min(chartItems, d => d.startTime);
+            let domainMin, domainMax;
+
+            if (timeSpan === 'all') {
+                domainMin = d3.min(chartItems, d => d.startTime);
+                domainMax = d3.max(chartItems, d => d.endTime);
+            } else {
+                domainMin = minTimeGlobal;
+                domainMax = new Date(domainMin.getTime() + timeSpan * 60 * 60 * 1000);
+            }
+            xScale.domain([domainMin, domainMax]).nice();
+
+            const svg = d3.select("#chart").append("svg")
+                .attr("class", "svg-container")
+                .attr("width", svgTotalWidth).attr("height", height + margin.top + margin.bottom)
+                .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const tickInterval = (timeSpan === 1) ? 5 : (timeSpan === 4 ? 15 : 30);
+            
+            // グリッド線
+            svg.append("g").attr("class", "grid-lines")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(d3.timeMinute.every(tickInterval)).tickSize(-height).tickFormat(""));
+            
+            // X軸
+            svg.append("g").attr("class", "x-axis axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(d3.timeMinute.every(tickInterval)).tickFormat(d3.timeFormat("%H:%M")));
+            
+            // Y軸
+            svg.append("g").attr("class", "y-axis axis")
+                .call(d3.axisLeft(yScale));
+
+            // アイテムの描画
+            svg.append("g")
+                .selectAll("g")
+                .data(chartItems)
+                .join("g")
+                .attr("class", "item-group")
+                .append("rect")
+                .attr("class", d => d.type.startsWith('port') ? 'port-rect' : `${d.type}-rect`)
+                .attr("x", d => xScale(d.startTime))
+                .attr("y", d => d.type.startsWith('port') ? yScale(d.equipment) + (yScale.bandwidth() / 2) - (portHeight / 2) : yScale(d.equipment))
+                .attr("width", d => Math.max(0, xScale(d.endTime) - xScale(d.startTime)))
+                .attr("height", d => d.type.startsWith('port') ? portHeight : yScale.bandwidth())
+                // ★変更点: 角丸の半径を小さくして、より四角い印象に
+                .attr("rx", 2)
+                .attr("ry", 2);
+            
+            // リンクの描画
+            svg.append("g").attr("class", "links").selectAll("line").data(links).join("line")
+                .attr("class", "link-line")
+                .each(function(d) {
+                    const sourceItem = itemsById.get(d.source);
+                    const targetItem = itemsById.get(d.target);
+                    if (!sourceItem || !targetItem) return;
+                    const x1 = xScale(sourceItem.endTime);
+                    const y1 = yScale(sourceItem.equipment) + yScale.bandwidth() / 2;
+                    const x2 = xScale(targetItem.startTime);
+                    const y2 = yScale(targetItem.equipment) + yScale.bandwidth() / 2;
+                    d3.select(this).attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+                });
+        }
+
+        let currentZoom = 'all';
+
+        d3.selectAll(".controls button").on("click", function() {
+            d3.selectAll(".controls button").classed("active", false);
+            d3.select(this).classed("active", true);
+            const id = d3.select(this).attr("id");
+            if (id === "zoom-1h") currentZoom = 1;
+            else if (id === "zoom-4h") currentZoom = 4;
+            else if (id === "zoom-8h") currentZoom = 8;
+            else if (id === "zoom-all") currentZoom = 'all';
+            drawChart(currentZoom);
+        });
+
+        window.addEventListener('resize', () => { drawChart(currentZoom); });
+
+        drawChart(currentZoom);
+    </script>
+</body>
+</html>
