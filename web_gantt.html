@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Gantt Chart (API Version)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366F1; /* Indigo 500 */
+            --background-light: #F9FAFB; /* Gray 50 */
+            --text-color-dark: #1F2937; /* Gray 900 */
+            --text-color-light: #6B7280; /* Gray 500 */
+            --border-color: #E5E7EB; /* Gray 200 */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            margin: 0; 
+            padding: 20px; 
+            background-color: var(--background-light);
+            color: var(--text-color-dark);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--text-color-dark);
+        }
+
+        .controls { 
+            margin-bottom: 20px; 
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .controls button { 
+            padding: 10px 18px; 
+            font-size: 0.95rem; 
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: white;
+            color: var(--text-color-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .controls button:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .controls button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .chart-scroll-container {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-sizing: border-box;
+            background-color: white;
+            box-shadow: var(--shadow-md);
+            padding: 15px;
+        }
+
+        .svg-container {
+            font-size: 0.85rem;
+        }
+        
+        .item-group {
+            transition: transform 0.15s ease, filter 0.15s ease;
+            cursor: pointer;
+        }
+
+        .item-group:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .pre-rect  { fill: #DBEAFE; stroke: #60A5FA; stroke-width: 1.2; }
+        .main-rect { fill: #BFDBFE; stroke: #3B82F6; stroke-width: 1.2; }
+        .post-rect { fill: #93C5FD; stroke: #2563EB; stroke-width: 1.2; }
+        .port-rect { fill: #A78BFA; stroke: #7C3AED; stroke-width: 1; }
+
+        .option-task-a, .option-task-b {
+            stroke-width: 2 !important;
+        }
+        .option-task-a { stroke: #3B82F6 !important; }
+        .option-task-b { stroke: #8B5CF6 !important; }
+        
+        .link-line { 
+            stroke: var(--text-color-light); 
+            stroke-width: 1.5; 
+            fill: none;
+            stroke-dasharray: 4 4;
+        }
+
+        .axis line, .axis path {
+            stroke: var(--border-color);
+            stroke-width: 1;
+        }
+
+        .axis text {
+            fill: var(--text-color-light);
+        }
+        
+        .x-axis .domain { stroke-width: 0; }
+        .y-axis .domain { stroke-width: 0; }
+        .y-axis .tick line { stroke-width: 0; }
+        .y-axis .tick text { font-weight: 500; }
+
+        .grid-lines line {
+            stroke: var(--border-color);
+            stroke-dasharray: none;
+            opacity: 0.7;
+        }
+
+        .grid-lines path {
+            stroke-width: 0;
+        }
+
+        .task-label {
+            font-size: 0.75rem;
+            fill: var(--text-color-dark);
+            font-weight: 500;
+            pointer-events: none; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <h1>生産スケジュール</h1>
+    <div class="controls">
+        <button id="zoom-1h">1時間</button>
+        <button id="zoom-4h">4時間</button>
+        <button id="zoom-8h">8時間</button>
+        <button id="zoom-all" class="active">全体</button>
+    </div>
+    <div id="chart" class="chart-scroll-container"></div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/d3-time-format.v3.min.js"></script>
+
+    <script>
+        // APIからデータを取得し、チャート描画を初期化するメイン関数
+        async function fetchAndInitialize() {
+            try {
+                // Spring BootのAPIエンドポイント
+                const apiEndpoint = 'http://localhost:8080/api/schedule';
+                const response = await fetch(apiEndpoint);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+                const data = await response.json();
+
+                // APIから受け取った日時文字列を、JavaScriptのDateオブジェクトに変換
+                const chartItems = data.chartItems.map(item => ({
+                    ...item,
+                    startTime: new Date(item.startTime),
+                    endTime: new Date(item.endTime),
+                }));
+
+                // 取得・整形したデータでチャートの初期化処理を呼び出す
+                initializeChart(chartItems, data.links, data.equipment);
+
+            } catch (error) {
+                console.error("スケジュールデータの取得に失敗しました:", error);
+                d3.select("#chart").html(`<p style="color: red; padding: 20px;">スケジュールデータの読み込みに失敗しました。<br>APIサーバーが起動しているか確認してください。</p>`);
+            }
+        }
+
+        // チャートの描画ロジックとイベントリスナーを管理する関数
+        function initializeChart(chartItems, links, equipment) {
+            const itemsById = new Map(chartItems.map(d => [d.id, d]));
+            let currentZoom = 'all';
+
+            // --------------------------------------------------
+            // チャート描画関数 (内容は前回から変更なし)
+            // --------------------------------------------------
+            function drawChart(timeSpan) {
+                d3.select("#chart").selectAll("svg").remove();
+
+                const container = d3.select("#chart").node();
+                const visibleWidth = container.getBoundingClientRect().width - 30;
+                
+                const margin = { top: 20, right: 30, bottom: 40, left: 80 };
+                const height = 300 - margin.top - margin.bottom;
+                
+                const svgTotalWidth = 1800; // 常にスクロールバーを表示するために幅を固定
+                const width = svgTotalWidth - margin.left - margin.right;
+                
+                const portHeight = 12;
+                const rowPadding = 0.4;
+
+                const yScale = d3.scaleBand().domain(equipment).range([0, height]).padding(rowPadding);
+                const xScale = d3.scaleTime().range([0, width]);
+
+                const minTimeGlobal = d3.min(chartItems, d => d.startTime);
+                let domainMin, domainMax;
+
+                if (timeSpan === 'all') {
+                    domainMin = d3.min(chartItems, d => d.startTime);
+                    domainMax = d3.max(chartItems, d => d.endTime);
+                } else {
+                    domainMin = minTimeGlobal;
+                    domainMax = new Date(domainMin.getTime() + timeSpan * 60 * 60 * 1000);
+                }
+                xScale.domain([domainMin, domainMax]).nice();
+
+                const svg = d3.select("#chart").append("svg")
+                    .attr("class", "svg-container")
+                    .attr("width", svgTotalWidth)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                const defs = svg.append('defs');
+                
+                const patternA = defs.append('pattern').attr('id', 'pattern-a').attr('width', 8).attr('height', 8).attr('patternUnits', 'userSpaceOnUse').attr('patternTransform', 'rotate(45)');
+                patternA.append('rect').attr('width', 8).attr('height', 8).attr('fill', '#BFDBFE');
+                patternA.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 8).attr('stroke', '#60A5FA').attr('stroke-width', 4);
+
+                const patternB = defs.append('pattern').attr('id', 'pattern-b').attr('width', 8).attr('height', 8).attr('patternUnits', 'userSpaceOnUse').attr('patternTransform', 'rotate(45)');
+                patternB.append('rect').attr('width', 8).attr('height', 8).attr('fill', '#DDD6FE');
+                patternB.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 8).attr('stroke', '#A78BFA').attr('stroke-width', 4);
+
+                const tickInterval = (timeSpan === 1) ? 5 : (timeSpan === 4 ? 15 : 30);
+                
+                svg.append("g").attr("class", "grid-lines").attr("transform", `translate(0,${height})`).call(d3.axisBottom(xScale).ticks(d3.timeMinute.every(tickInterval)).tickSize(-height).tickFormat(""));
+                svg.append("g").attr("class", "x-axis axis").attr("transform", `translate(0,${height})`).call(d3.axisBottom(xScale).ticks(d3.timeMinute.every(tickInterval)).tickFormat(d3.timeFormat("%H:%M")));
+                svg.append("g").attr("class", "y-axis axis").call(d3.axisLeft(yScale));
+
+                const itemGroups = svg.append("g").selectAll("g").data(chartItems).join("g").attr("class", "item-group");
+
+                itemGroups.append("rect")
+                    .attr("class", d => {
+                        let baseClass = d.type.startsWith('port') ? 'port-rect' : `${d.type}-rect`;
+                        if (d.options && d.options.includes('A')) baseClass += ' option-task-a';
+                        if (d.options && d.options.includes('B')) baseClass += ' option-task-b';
+                        return baseClass;
+                    })
+                    .attr("x", d => xScale(d.startTime))
+                    .attr("y", d => d.type.startsWith('port') ? yScale(d.equipment) + (yScale.bandwidth() / 2) - portHeight / 2 : yScale(d.equipment))
+                    .attr("width", d => Math.max(0, xScale(d.endTime) - xScale(d.startTime)))
+                    .attr("height", d => d.type.startsWith('port') ? portHeight : yScale.bandwidth())
+                    .attr("rx", 2).attr("ry", 2)
+                    .style("fill", d => {
+                        if (d.options && d.options.includes('A')) return 'url(#pattern-a)';
+                        if (d.options && d.options.includes('B')) return 'url(#pattern-b)';
+                        return null;
+                    });
+
+                itemGroups.append("text")
+                    .attr("class", "task-label")
+                    .attr("x", d => xScale(d.startTime) + 6)
+                    .attr("y", d => yScale(d.equipment) + (yScale.bandwidth() / 2))
+                    .attr("dy", "0.35em")
+                    .text(d => d.id)
+                    .each(function(d) {
+                        const rectWidth = Math.max(0, xScale(d.endTime) - xScale(d.startTime));
+                        if (this.getBBox().width + 12 > rectWidth) {
+                            d3.select(this).style("display", "none");
+                        }
+                    });
+                
+                svg.append("g").attr("class", "links").selectAll("line").data(links).join("line").attr("class", "link-line")
+                    .each(function(d) {
+                        const sourceItem = itemsById.get(d.source);
+                        const targetItem = itemsById.get(d.target);
+                        if (!sourceItem || !targetItem) return;
+                        const x1 = xScale(sourceItem.endTime);
+                        const y1 = yScale(sourceItem.equipment) + yScale.bandwidth() / 2;
+                        const x2 = xScale(targetItem.startTime);
+                        const y2 = yScale(targetItem.equipment) + yScale.bandwidth() / 2;
+                        d3.select(this).attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+                    });
+            }
+
+            // --------------------------------------------------
+            // イベントリスナー設定
+            // --------------------------------------------------
+            d3.selectAll(".controls button").on("click", function() {
+                d3.selectAll(".controls button").classed("active", false);
+                d3.select(this).classed("active", true);
+                const id = d3.select(this).attr("id");
+                if (id === "zoom-1h") currentZoom = 1;
+                else if (id === "zoom-4h") currentZoom = 4;
+                else if (id === "zoom-8h") currentZoom = 8;
+                else if (id === "zoom-all") currentZoom = 'all';
+                drawChart(currentZoom);
+            });
+
+            window.addEventListener('resize', () => { drawChart(currentZoom); });
+
+            // 初回描画
+            drawChart(currentZoom);
+        }
+
+        // ページの読み込みが完了したら、APIからのデータ取得を開始
+        document.addEventListener('DOMContentLoaded', fetchAndInitialize);
+    </script>
+</body>
+</html>
