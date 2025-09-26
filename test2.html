@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D3.js Modern Gantt Chart (Always Scroll)</title>
+    <title>D3.js Modern Gantt Chart (Full Featured)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -141,6 +141,86 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 999;
+        }
+
+        .panel-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #details-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100%;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #details-panel.show {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .panel-header .close-button {
+            font-size: 1.8rem;
+            color: var(--text-color-light);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .panel-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .panel-content p {
+            margin: 12px 0;
+            line-height: 1.7;
+            display: flex;
+        }
+
+        .panel-content strong {
+            flex-shrink: 0;
+            width: 100px;
+            color: var(--text-color-light);
+            font-weight: 500;
+        }
+
+        .panel-content span {
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -153,27 +233,32 @@
     </div>
     <div id="chart" class="chart-scroll-container"></div>
 
+    <div id="panel-overlay" class="panel-overlay"></div>
+    <div id="details-panel">
+        <div class="panel-header">
+            <h2>タスク詳細</h2>
+            <span class="close-button">&times;</span>
+        </div>
+        <div class="panel-content" id="panel-details">
+        </div>
+    </div>
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://d3js.org/d3-time-format.v3.min.js"></script>
 
     <script>
         const equipment = ["設備A", "設備B", "設備C"];
         const chartItems = [
-            // Job 1
             { id: 'J1-main', jobId: 'Job1', type: 'main', equipment: "設備A", startTime: new Date("2025-09-26T09:20:00"), endTime: new Date("2025-09-26T10:00:00"), options: ['A'] },
             { id: 'J1-in',  jobId: 'Job1', type: 'port-in',  equipment: "設備A", startTime: new Date("2025-09-26T09:00:00"), endTime: new Date("2025-09-26T09:05:00") },
             { id: 'J1-pre', jobId: 'Job1', type: 'pre',  equipment: "設備A", startTime: new Date("2025-09-26T09:05:00"), endTime: new Date("2025-09-26T09:20:00") },
             { id: 'J1-post',jobId: 'Job1', type: 'post', equipment: "設備A", startTime: new Date("2025-09-26T10:00:00"), endTime: new Date("2025-09-26T10:10:00") },
             { id: 'J1-out', jobId: 'Job1', type: 'port-out', equipment: "設備A", startTime: new Date("2025-09-26T10:10:00"), endTime: new Date("2025-09-26T10:15:00") },
-            
-            // Job 2
             { id: 'J2-main', jobId: 'Job2', type: 'main', equipment: "設備B", startTime: new Date("2025-09-26T10:45:00"), endTime: new Date("2025-09-26T11:45:00"), options: ['B'] },
             { id: 'J2-in',  jobId: 'Job2', type: 'port-in',  equipment: "設備B", startTime: new Date("2025-09-26T10:30:00"), endTime: new Date("2025-09-26T10:35:00") },
             { id: 'J2-pre', jobId: 'Job2', type: 'pre',  equipment: "設備B", startTime: new Date("2025-09-26T10:35:00"), endTime: new Date("2025-09-26T10:45:00") },
             { id: 'J2-post',jobId: 'Job2', type: 'post', equipment: "設備B", startTime: new Date("2025-09-26T11:45:00"), endTime: new Date("2025-09-26T11:55:00") },
             { id: 'J2-out', jobId: 'Job2', type: 'port-out', equipment: "設備B", startTime: new Date("2025-09-26T11:55:00"), endTime: new Date("2025-09-26T12:00:00") },
-        
-            // Job 3
             { id: 'J3-main', jobId: 'Job3', type: 'main', equipment: "設備C", startTime: new Date("2025-09-26T11:15:00"), endTime: new Date("2025-09-26T12:30:00") },
             { id: 'J3-in',  jobId: 'Job3', type: 'port-in',  equipment: "設備C", startTime: new Date("2025-09-26T11:00:00"), endTime: new Date("2025-09-26T11:05:00") },
             { id: 'J3-pre', jobId: 'Job3', type: 'pre',  equipment: "設備C", startTime: new Date("2025-09-26T11:05:00"), endTime: new Date("2025-09-26T11:15:00") },
@@ -197,7 +282,6 @@
             const margin = { top: 20, right: 30, bottom: 40, left: 80 };
             const height = 300 - margin.top - margin.bottom;
             
-            // ★変更点: SVGの合計幅を常に固定値に設定
             const svgTotalWidth = 1800;
             const width = svgTotalWidth - margin.left - margin.right;
             
@@ -261,7 +345,10 @@
                 .selectAll("g")
                 .data(chartItems)
                 .join("g")
-                .attr("class", "item-group");
+                .attr("class", "item-group")
+                .on("click", (event, d) => {
+                    openPanel(d);
+                });
 
             itemGroups.append("rect")
                 .attr("class", d => {
@@ -312,6 +399,35 @@
                 });
         }
 
+        const panel = document.getElementById('details-panel');
+        const overlay = document.getElementById('panel-overlay');
+        const panelDetailsContainer = document.getElementById('panel-details');
+        const closePanelButton = panel.querySelector('.close-button');
+
+        function formatDateTime(date) {
+            if (!date) return 'N/A';
+            return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        }
+        
+        function openPanel(taskData) {
+            panelDetailsContainer.innerHTML = `
+                <p><strong>タスク ID:</strong> <span>${taskData.id}</span></p>
+                <p><strong>ジョブ ID:</strong> <span>${taskData.jobId}</span></p>
+                <p><strong>タイプ:</strong> <span>${taskData.type}</span></p>
+                <p><strong>設備:</strong> <span>${taskData.equipment}</span></p>
+                <p><strong>開始日時:</strong> <span>${formatDateTime(taskData.startTime)}</span></p>
+                <p><strong>終了日時:</strong> <span>${formatDateTime(taskData.endTime)}</span></p>
+                <p><strong>オプション:</strong> <span>${taskData.options ? taskData.options.join(', ') : 'なし'}</span></p>
+            `;
+            panel.classList.add('show');
+            overlay.classList.add('show');
+        }
+
+        function closePanel() {
+            panel.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+
         let currentZoom = 'all';
 
         d3.selectAll(".controls button").on("click", function() {
@@ -326,6 +442,9 @@
         });
 
         window.addEventListener('resize', () => { drawChart(currentZoom); });
+
+        closePanelButton.addEventListener('click', closePanel);
+        overlay.addEventListener('click', closePanel);
 
         drawChart(currentZoom);
     </script>
