@@ -1,0 +1,70 @@
+<link rel="stylesheet" href="gantt-chart-component.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<div id="app-container">
+    <div id="app-header">
+        <button id="sidebar-toggle-btn">&#9776;</button>
+        <h1>生産スケジュール</h1>
+    </div>
+    <div id="app-body">
+        <div id="side-panel" class="collapsed">
+            <div class="sidebar-content">
+                <div class="controls-group">
+                    <h3>ズーム (時間)</h3>
+                    <div class="zoom-controls">
+                        <input type="range" id="zoom-slider" min="1" max="72" value="8">
+                        <span id="zoom-value">8時間</span>
+                        <div class="zoom-buttons">
+                            <button data-zoom="4">4時間</button>
+                            <button data-zoom="8">8時間</button>
+                            <button data-zoom="12">12時間</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls-group">
+                    <h3>表示範囲</h3>
+                    <div class="time-range-controls">
+                        <label for="start-time">開始:</label>
+                        <input type="datetime-local" id="start-time-input">
+                        <label for="end-time">終了:</label>
+                        <input type="datetime-local" id="end-time-input">
+                        <button id="redisplay-button">表示範囲を適用</button>
+                    </div>
+                </div>
+                <div class="controls-group">
+                    <h3>表示モード</h3>
+                    <div class="mode-controls">
+                        <button id="plan-vs-actual-button">計画対実績モード</button>
+                    </div>
+                </div>
+                <div class="controls-group">
+                    <h3>カスタムライン</h3>
+                    <div class="custom-line-controls">
+                        <label for="custom-line-time">時刻:</label>
+                        <input type="datetime-local" id="custom-line-time-input">
+                        <button id="add-line-button">縦線を追加</button>
+                    </div>
+                </div>
+                <div class="controls-group">
+                    <h3>レイアウト</h3>
+                    <div class="layout-controls">
+                        <label for="row-height-input">行の高さ:</label>
+                        <input type="number" id="row-height-input" value="50" min="20" max="150">
+                        <button id="apply-layout-button">適用</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="main-panel">
+            <div id="gantt-header">
+                <div id="gantt-top-left"></div>
+                <div id="gantt-x-axis"></div>
+            </div>
+            <div id="gantt-body">
+                <div id="gantt-y-axis"></div>
+                <div id="gantt-chart-area"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="details-panel-overlay"></div>
+<div id="details-panel"></div>

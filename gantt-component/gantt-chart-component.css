@@ -1,0 +1,234 @@
+:host {
+    --primary-color: #4F46E5;
+    --background-color: #111827;
+    --surface-color: #1F2937;
+    --text-color-dark: #F9FAFB;
+    --text-color-light: #9CA3AF;
+    --border-color: #374151;
+    --sidebar-width: 320px;
+    --header-height: 60px;
+    --y-axis-width: 100px;
+}
+
+#app-container, :host {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--background-color);
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--text-color-dark);
+}
+
+#app-header {
+    height: var(--header-height);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#sidebar-toggle-btn {
+    background: none; 
+    border: 1px solid transparent; 
+    font-size: 1.5rem; 
+    cursor: pointer;
+    margin-right: 1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+    color: var(--text-color-dark);
+}
+
+#sidebar-toggle-btn:hover {
+    background-color: var(--background-color);
+}
+
+#app-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+#app-body {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+    #side-panel {
+        width: var(--sidebar-width);
+        flex-shrink: 0;
+        background-color: var(--background-color);
+        border-right: 1px solid var(--border-color);
+        transition: width 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+#side-panel.collapsed {
+    width: 0;
+    padding: 0;
+    margin: 0;
+    border-right: none;
+}
+
+.sidebar-content {
+    padding: 1.5rem;
+    min-width: calc(var(--sidebar-width) - 3rem);
+}
+
+.controls-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--background-color);
+}
+
+.controls-group h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--text-color-dark);
+}
+
+#main-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* New Gantt Layout Styles */
+    #gantt-header {
+        display: flex;
+        flex-shrink: 0;
+        background-color: var(--surface-color);
+        border-bottom: 1px solid var(--border-color);
+    }
+    #gantt-top-left {
+        width: var(--y-axis-width);
+        flex-shrink: 0;
+        border-right: 1px solid var(--border-color);
+    }
+    #gantt-x-axis {
+        flex-grow: 1;
+        overflow-x: hidden;
+    }
+    #gantt-body {
+        display: flex;
+        /* flex-grow: 1; */ /* Removed to allow container to shrink to content height */
+        overflow: hidden; 
+        position: relative;
+    }
+    #gantt-y-axis {
+        width: var(--y-axis-width);
+        flex-shrink: 0;
+        overflow-y: hidden;
+        z-index: 10;
+        background-color: var(--surface-color); /* Dark header-like background */
+        border-right: 1px solid var(--border-color);
+    }    #gantt-chart-area {
+        flex-grow: 1;
+        overflow: auto; /* This will have both scrollbars */
+        background-color: #FFFFFF; /* White background for readability */
+    }
+
+/* Controls styling */
+.zoom-controls, .time-range-controls, .custom-line-controls, .layout-controls, .mode-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.controls button, #redisplay-button, #add-line-button, #apply-layout-button, .mode-controls button {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--surface-color);
+    color: var(--text-color-dark);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: left;
+}
+.controls button:hover, #redisplay-button:hover, #add-line-button:hover, #apply-layout-button:hover, .mode-controls button:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background-color: var(--background-color);
+}
+.controls button.active, .mode-controls button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+.time-range-controls input, .custom-line-controls input, .layout-controls input {
+    font-family: 'Noto Sans JP', sans-serif;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--background-color);
+    color: var(--text-color-dark);
+}
+
+/* Chart-specific styles */
+.svg-container { font-size: 0.8rem; }
+.item-group { cursor: pointer; }
+.pre-rect, .main-rect, .post-rect { transition: filter 0.2s ease-in-out; }
+.item-group:hover .pre-rect, .item-group:hover .main-rect, .item-group:hover .post-rect { filter: brightness(1.2); }
+
+/* Make bar colors brighter for dark mode */
+.pre-rect  { fill: #A3BFFA; stroke: #818CF8; }
+.main-rect { fill: #818CF8; stroke: #6366F1; }
+    .post-rect { fill: #C7D2FE; stroke: #A3BFFA; }
+    .actual-bar { fill: #111827; } /* Dark color for actual tasks on white bg */
+    .downtime-rect {
+        fill: #EF4444; /* Red color for downtime */
+        stroke: #DC2626;
+        opacity: 0.7;
+    }
+.link-line { stroke: var(--text-color-light); stroke-width: 1.5; fill: none; stroke-dasharray: 3 3; }
+.axis line, .axis path { stroke: var(--border-color); stroke-width: 1; }
+    .axis text { fill: #6B7280; font-size: 0.75rem; } /* Original --text-color-light */
+    .x-axis-time .tick text { text-anchor: start; }
+    .x-axis-day .tick text { text-anchor: start; }
+
+    .zoom-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .zoom-buttons button {
+        flex-grow: 1;
+        text-align: center;
+        padding: 0.4rem 0.8rem;
+    }
+    .x-axis .domain, .y-axis .domain, .y-axis .tick line { display: none; }
+    .y-axis .tick text { font-weight: 600; fill: var(--text-color-dark); }
+    .grid-lines line { stroke: #E5E7EB; opacity: 0.7; } /* Original --border-color */
+    .grid-lines path { stroke-width: 0; }
+    .task-label { font-size: 0.7rem; fill: #1F2937; font-weight: 600; pointer-events: none; }.top-left-date { font-size: 0.75rem; font-weight: 600; fill: var(--text-color-light); }
+.current-time-line { stroke: #F43F5E; } /* Red */
+.custom-time-line { stroke: #A855F7; } /* Purple */
+
+
+/* Details Panel */
+#details-panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; z-index: 3000; }
+#details-panel-overlay.show { opacity: 1; visibility: visible; }
+#details-panel { position: fixed; top: 0; right: 0; width: 380px; height: 100%; background-color: var(--surface-color); box-shadow: -10px 0 25px rgba(0,0,0,0.2); transform: translateX(100%); transition: transform 0.3s ease; z-index: 3001; border-left: 1px solid var(--border-color); }
+#details-panel.show { transform: translateX(0); }
+.panel-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.panel-header h2 { margin: 0; font-size: 1.25rem; }
+.panel-header .close-button { font-size: 1.5rem; color: var(--text-color-light); cursor: pointer; }
+.panel-content { padding: 1.5rem; overflow-y: auto; }
+.panel-content p { margin: 0 0 1rem 0; display: flex; font-size: 0.875rem; }
+.panel-content strong { flex-shrink: 0; width: 90px; color: var(--text-color-light); font-weight: 500; }
+.panel-content span { font-weight: 600; color: var(--text-color-dark); }

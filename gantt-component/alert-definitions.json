@@ -1,0 +1,10 @@
+{
+  "ALERT_CRANE": {
+    "icon": "⚠️",
+    "description": "クレーン#3が競合しています"
+  },
+  "ALERT_POWER": {
+    "icon": "⚡️",
+    "description": "電力不足の可能性があります"
+  }
+}
