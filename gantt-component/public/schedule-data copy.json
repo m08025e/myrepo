@@ -1,0 +1,27 @@
+{
+    "equipment": ["設備A", "設備B", "設備C"],
+    "items": [
+        { "id": "J1-main", "jobId": "Job1", "type": "main", "equipment": "設備A", "startTime": "2025-09-26T09:20:00", "endTime": "2025-09-26T10:00:00", "options": ["bg-blue", "border-blue", "border-lg"], "actualStartTime": "2025-09-26T09:20:00", "actualEndTime": "2025-09-26T09:50:00" },
+        { "id": "J1-in",  "jobId": "Job1", "type": "port-in",  "equipment": "設備A", "startTime": "2025-09-26T09:00:00", "endTime": "2025-09-26T09:05:00" },
+        { "id": "J1-pre", "jobId": "Job1", "type": "pre",  "equipment": "設備A", "startTime": "2025-09-26T09:05:00", "endTime": "2025-09-26T09:20:00" },
+        { "id": "J1-post","jobId": "Job1", "type": "post", "equipment": "設備A", "startTime": "2025-09-26T10:00:00", "endTime": "2025-09-26T10:10:00", "alertId": "ALERT_POWER" },
+        { "id": "J1-out", "jobId": "Job1", "type": "port-out", "equipment": "設備A", "startTime": "2025-09-26T10:10:00", "endTime": "2025-09-26T10:15:00" },
+        { "id": "J2-main", "jobId": "Job2", "type": "main", "equipment": "設備B", "startTime": "2025-09-26T10:45:00", "endTime": "2025-09-26T11:45:00", "options": ["bg-red", "border-red", "border-md"], "actualStartTime": "2025-09-26T11:00:00", "actualEndTime": "2025-09-26T12:00:00" },
+        { "id": "J2-in",  "jobId": "Job2", "type": "port-in",  "equipment": "設備B", "startTime": "2025-09-26T10:30:00", "endTime": "2025-09-26T10:35:00", "alertId": "ALERT_CRANE" },
+        { "id": "J2-pre", "jobId": "Job2", "type": "pre",  "equipment": "設備B", "startTime": "2025-09-26T10:35:00", "endTime": "2025-09-26T10:45:00" },
+        { "id": "J2-post","jobId": "Job2", "type": "post", "equipment": "設備B", "startTime": "2025-09-26T11:45:00", "endTime": "2025-09-26T11:55:00" },
+        { "id": "J2-out", "jobId": "Job2", "type": "port-out", "equipment": "設備B", "startTime": "2025-09-26T11:55:00", "endTime": "2025-09-26T12:00:00" },
+        { "id": "J3-main", "jobId": "Job3", "type": "main", "equipment": "設備C", "startTime": "2025-09-26T11:15:00", "endTime": "2025-09-26T12:30:00", "options": ["bg-green", "border-green", "border-sm"], "actualStartTime": "2025-09-26T11:15:00" },
+        { "id": "J3-in",  "jobId": "Job3", "type": "port-in",  "equipment": "設備C", "startTime": "2025-09-26T11:00:00", "endTime": "2025-09-26T11:05:00" },
+        { "id": "J3-pre", "jobId": "Job3", "type": "pre",  "equipment": "設備C", "startTime": "2025-09-26T11:05:00", "endTime": "2025-09-26T11:15:00" },
+        { "id": "J3-post","jobId": "Job3", "type": "post", "equipment": "設備C", "startTime": "2025-09-26T12:30:00", "endTime": "2025-09-26T12:40:00" , "options": ["bg-yellow"]},
+        { "id": "J3-out", "jobId": "Job3", "type": "port-out", "equipment": "設備C", "startTime": "2025-09-26T12:40:00", "endTime": "2025-09-26T12:45:00" },
+        { "id": "J4-main", "jobId": "Job4", "type": "main", "equipment": "設備A", "startTime": "2025-09-26T09:40:00", "endTime": "2025-09-26T10:20:00", "options": ["bg-yellow", "border-yellow"], "actualStartTime": "2025-09-26T09:45:00", "actualEndTime": "2025-09-26T10:30:00" },
+        { "id": "Downtime-EQA-01", "equipment": "設備A", "startTime": "2025-09-26T10:30:00", "endTime": "2025-09-26T11:00:00", "description": "定期メンテナンス",
+    "options": ["pattern-stripes"] }
+    ],
+    "links": [
+        { "source": "J1-out", "target": "J2-in" },
+        { "source": "J2-out", "target": "J3-in" }
+    ]
+}

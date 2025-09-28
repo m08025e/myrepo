@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt Chart Options Demo</title>
+    <script src="../dist/gantt-chart-component.js"></script>
+    <style>
+        body {
+            background-color: #111827; /* Match component dark theme */
+            color: #F9FAFB;
+            font-family: sans-serif;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gantt Chart `options` プロパティのデモ</h1>
+    <p>
+        <code>schedule-data-variations.json</code>内の各タスクに、<code>managed:</code>接頭辞を持つ「マネージドオプション」を指定した際の表示例です。
+    </p>
+    <p>
+        これらのスタイル（色、柄、枠線）はコンポーネントに組み込まれているため、このページでは追加のCSSやSVG定義を行っていません。
+    </p>
+
+    <gantt-chart-component 
+        properties-url="config.json"
+        data-config-url="config-data.json"
+        data-url="schedule-data-variations.json"
+        alert-definitions-url="alert-definitions.json"
+    >
+        <!-- 
+            マネージドオプションを使用するため、カスタムのCSSやSVG定義は不要になりました。
+            コンポーネントに組み込まれたスタイルが自動的に適用されます。
+            独自のスタイルを追加したい場合は、引き続きslotを利用できます。
+        -->
+    </gantt-chart-component>
+
+</body>
+</html>

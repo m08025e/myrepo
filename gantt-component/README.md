@@ -7,33 +7,32 @@
 ## 特徴
 
 *   **Webコンポーネント**: 再利用可能でカプセル化されたHTML要素として実装。
+*   **外部設定ファイル**: 表示内容や文言、スタイルを外部のJSONファイルから設定可能。
 *   **インタラクティブな表示**:
     *   ズームスライダーとボタンによる時間軸の拡大・縮小。
     *   X軸（時間軸）とY軸（設備）の同期スクロール。
     *   タスククリックによる詳細パネル表示。
 *   **モダンなUI**: ダークモードを基調とした洗練されたデザイン。
-*   **カスタマイズ可能な表示**:
-    *   表示範囲（開始・終了時刻）の指定。
-    *   行の高さ調整。
-    *   計画対実績モードの切り替え。
-    *   カスタム縦線の追加。
-*   **アラート表示**: 定義されたアラートアイコンと説明の表示。
-*   **休止情報表示**: 設備の休止期間を視覚的に区別して表示。
+*   **テスト完備**: Jestによるテストスイートが導入されており、機能の追加やリファクタリング時の品質を保証します。
 
 ## 使用技術
 
 *   **HTML/CSS/JavaScript**: Webコンポーネントの基盤技術。
 *   **D3.js (v7)**: データ駆動型ドキュメントのためのJavaScriptライブラリ。チャートの描画に使用。
-*   **Google Fonts (Noto Sans JP)**: モダンな日本語フォント。
+*   **Jest**: JavaScriptテストフレームワーク。
 
 ## セットアップと実行方法
 
-1.  このリポジトリをクローンします。
+1.  このリポジトリをクローンし、プロジェクトディレクトリに移動します。
     ```bash
     git clone [リポジトリのURL]
     cd gantt-component
     ```
-2.  プロジェクトのルートディレクトリで、ローカルWebサーバーを起動します。
+2.  テスト環境に必要な依存関係をインストールします。
+    ```bash
+    npm install
+    ```
+3.  プロジェクトのルートディレクトリで、ローカルWebサーバーを起動します。
     *   **Pythonの場合:**
         ```bash
         python -m http.server
@@ -42,124 +41,141 @@
         ```bash
         npx http-server
         ```
-3.  Webブラウザで `http://localhost:8000` (またはWebサーバーが指定するポート) にアクセスします。
+4.  Webブラウザで `http://localhost:8000/public/` にアクセスします。
 
 ## コンポーネントの使用方法
 
-`<gantt-chart-component>` Webコンポーネントは、`index.html` のように使用します。
+コンポーネントの表示や動作は、主に外部の設定ファイルによって制御されます。`public/index.html` のように使用します。
 
 ```html
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gantt Chart Web Component</title>
-    <script src="gantt-chart-component.js"></script>
-</head>
-<body>
-    <gantt-chart-component 
-        data-url="schedule-data.json"
-        alert-definitions-url="alert-definitions.json"
-        start-time="2025-09-26T08:00:00"
-        end-time="2025-09-26T14:00:00">
-    </gantt-chart-component>
-</body>
-</html>
+<gantt-chart-component 
+    properties-url="config.json"
+    data-config-url="config-data.json"
+    data-url="schedule-data.json"
+    alert-definitions-url="alert-definitions.json"
+></gantt-chart-component>
 ```
 
-### 属性
+### 属性 (Attributes)
 
-| 属性名                | 型     | 説明                                                              | デフォルト値                               |
-| :-------------------- | :----- | :---------------------------------------------------------------- | :----------------------------------------- |
-| `data-url`            | `string` | スケジュールデータを含むJSONファイルのURL。必須。                 | -                                          |
-| `alert-definitions-url` | `string` | アラート定義を含むJSONファイルのURL。必須。                       | -                                          |
-| `start-time`          | `string` | チャートの表示開始時刻 (ISO 8601形式: `YYYY-MM-DDTHH:MM`)。省略可。 | データ内の最小開始時刻                     |
-| `end-time`            | `string` | チャートの表示終了時刻 (ISO 8601形式: `YYYY-MM-DDTHH:MM`)。省略可。 | `start-time`から24時間後、またはデータ内の最大終了時刻 |
-| `row-height`          | `number` | 各設備の行の高さ (ピクセル)。                                     | `50`                                       |
+| 属性名                | 型     | 説明                                                              |
+| :-------------------- | :----- | :---------------------------------------------------------------- |
+| `properties-url`      | `string` | UIの文言(locale)や外観のデフォルト設定を含むJSONファイルのURL。     |
+| `data-config-url`     | `string` | 表示期間やカスタム縦線など、データに依存する設定を含むJSONファイルのURL。 |
+| `data-url`            | `string` | スケジュールデータ（タスク、設備など）を含むJSONファイルのURL。必須。   |
+| `alert-definitions-url` | `string` | アラート定義を含むJSONファイルのURL。必須。                       |
 
-## データ形式
+**Note:** `title`や`row-height`といった個別の属性をHTMLタグに直接指定することで、設定ファイルの内容を上書きすることも可能です。
 
-### `schedule-data.json`
+### スロット (Slots)
 
-ガントチャートに表示されるタスク、設備、リンクの情報を定義します。
+コンポーネントの描画をさらにカスタマイズするために、以下のスロットが用意されています。
 
-```json
-{
-    "equipment": ["設備A", "設備B", "設備C"],
-    "items": [
-        {
-            "id": "J1-main",
-            "jobId": "Job1",
-            "type": "main",
-            "equipment": "設備A",
-            "startTime": "2025-09-26T09:20:00",
-            "endTime": "2025-09-26T10:00:00",
-            "actualStartTime": "2025-09-26T09:20:00",
-            "actualEndTime": "2025-09-26T09:50:00",
-            "options": ["bg-blue", "border-blue"],
-            "alertId": "ALERT_POWER",
-            "description": "タスクの詳細説明"
-        },
-        {
-            "id": "Downtime-EQA-01",
-            "type": "downtime",
-            "equipment": "設備A",
-            "startTime": "2025-09-26T10:30:00",
-            "endTime": "2025-09-26T11:00:00",
-            "description": "定期メンテナンス"
-        }
-        // ... その他のタスク
-    ],
-    "links": [
-        { "source": "J1-out", "target": "J2-in" }
-        // ... その他のリンク
-    ]
-}
+| スロット名          | 説明                                                                                                                            |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------ |
+| `custom-styles`     | 外部からカスタムCSSを注入するためのスロット。`<style slot="custom-styles">...</style>`の形で使用します。`options`プロパティと組み合わせて、タスクバーの見た目を変更するのに便利です。 |
+| `svg-defs`          | 外部からSVG定義（`<pattern>`や`<linearGradient>`など）を注入するためのスロット。`<svg slot="svg-defs">...</svg>`の形で使用します。`options`プロパティでパターン塗りを指定する際に必要です。 |
+
+## 設定ファイル
+
+サンプルページ（`public/`）で使用されている設定ファイルです。
+
+### `config.json` (プロパティ設定)
+
+コンポーネントのタイトル、初期ズームレベル、UIの文言などを定義します。（内容は省略）
+
+### `config-data.json` (データ設定)
+
+表示期間やカスタム縦線を定義します。（内容は省略）
+
+### `schedule-data.json` (スケジュールデータ)
+
+ガントチャートに表示されるタスク(`items`)、設備(`equipment`)、タスク間の連携(`links`)の情報を定義します。
+
+#### `items`オブジェクトの`options`プロパティ
+
+`options`プロパティは、個々のタスクバーの見た目をカスタマイズするための文字列の配列です。オプションには、コンポーネントに予め用意された**マネージドオプション**と、ユーザーが自由に定義できる**カスタムオプション**の2種類があります。
+
+**1. マネージドオプション (Managed Options)**
+
+`managed-`という接頭辞が付く、コンポーネント標準のオプションです。これらを使用するために、ユーザー側でCSSやSVGを追加定義する必要はありません。
+
+| オプション名                  | 説明                               |
+| :-------------------------- | :--------------------------------- |
+| `managed-color-blue`        | タスクバーを青系の色にします。     |
+| `managed-color-red`         | タスクバーを赤系の色にします。     |
+| `managed-color-green`       | タスクバーを緑系の色にします。     |
+| `managed-color-yellow`      | タスクバーを黄色系の色にします。   |
+| `managed-pattern-stripes`   | タスクバーをストライプ柄にします。 |
+| `managed-border-thick`      | 枠線を太くします。                 |
+| `managed-border-dashed`     | 枠線を破線にします。               |
+
+*   **使用例:**
+    ```json
+    "options": ["managed-color-green", "managed-border-thick"]
+    ```
+
+**2. カスタムオプション (Custom Options)**
+
+`managed-`接頭辞が付かない文字列は、すべてカスタムオプションとして扱われます。これは、タスクバー要素にそのままCSSクラス名として付与されます。
+
+カスタムオプションを機能させるには、`custom-styles`スロットや`svg-defs`スロットを使い、ユーザー自身で対応するCSSやSVG定義をコンポーネントに注入する必要があります。
+
+*   **使用例:**
+    *   `schedule-data.json`で`"options": ["my-custom-style"]`と指定します。
+    *   コンポーネントを使用するHTML側で、以下のようにスタイルを注入します。
+        ```html
+        <gantt-chart-component>
+            <style slot="custom-styles">
+                .my-custom-style {
+                    fill: purple;
+                    stroke: gold;
+                }
+            </style>
+        </gantt-chart-component>
+        ```
+
+## テスト
+
+このプロジェクトにはJestを使用したテストスイートが含まれています。テストを実行するには、以下のコマンドを使用します。
+
+```bash
+npm test
 ```
 
-*   `equipment`: チャートのY軸に表示される設備名の配列。
-*   `items`: 各タスクのオブジェクトの配列。
-    *   `id`: タスクの一意のID。
-    *   `jobId`: 関連するジョブのID。
-    *   `type`: タスクの種類（例: `"main"`, `"pre"`, `"post"`, `"port-in"`, `"port-out"`, `"downtime"`）。CSSでスタイルを適用するために使用されます。
-    *   `equipment`: このタスクが関連付けられている設備名。
-    *   `startTime`, `endTime`: 計画されたタスクの開始・終了時刻 (ISO 8601形式)。
-    *   `actualStartTime`, `actualEndTime`: 実績の開始・終了時刻 (ISO 8601形式)。計画対実績モードで使用されます。
-    *   `options`: 追加のCSSクラスや装飾のための文字列配列。
-    *   `alertId`: `alert-definitions.json`で定義されたアラートのID。
-    *   `description`: タスクの詳細説明。詳細パネルに表示されます。
-*   `links`: タスク間の依存関係を定義するオブジェクトの配列。
-    *   `source`: リンク元のタスクID。
-    *   `target`: リンク先のタスクID。
+コードを変更した際は、このコマンドを実行してすべてのテストが成功することを確認してください。
 
-### `alert-definitions.json`
+## ファイル構成
 
-アラートのアイコンと説明を定義します。
-
-```json
-{
-  "ALERT_CRANE": {
-    "icon": "⚠️",
-    "description": "クレーン#3が競合しています"
-  },
-  "ALERT_POWER": {
-    "icon": "⚡️",
-    "description": "電力不足の可能性があります"
-  }
-}
+```
+/ (プロジェクトルート)
+├── dist/      (コンポーネントのソース)
+│   ├── gantt-chart-component.css
+│   ├── gantt-chart-component.html
+│   └── gantt-chart-component.js
+│
+├── public/    (サンプルページと関連データ)
+│   ├── index.html
+│   ├── alert-definitions.json
+│   ├── schedule-data.json
+│   ├── config.json
+│   └── config-data.json
+│
+├── tests/     (テストコードと設定)
+│   ├── __mocks__/
+│   ├── babel.config.js
+│   ├── jest.config.js
+│   ├── jest.setup.js
+│   └── gantt-chart-component.test.js
+│
+├── package.json
+├── package-lock.json
+└── README.md
 ```
 
-## 開発者向け情報
-
-### ファイル構成
-
-*   `index.html`: コンポーネントを使用するメインのHTMLファイル。
-*   `gantt-chart-component.js`: Webコンポーネントのロジック。
-*   `gantt-chart-component.html`: WebコンポーネントのHTMLテンプレート。
-*   `gantt-chart-component.css`: Webコンポーネントのスタイル。
-*   `schedule-data.json`: チャート表示用のサンプルデータ。
-*   `alert-definitions.json`: アラート定義データ。
+*   `dist/`: コンポーネントを構成する配布用のファイル群。
+*   `public/`: コンポーネントの使用方法を示すサンプルページと、そのデータファイル群。
+*   `tests/`: Jestによる自動テスト関連のファイル群。
 
 ## ライセンス
 
