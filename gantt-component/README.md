@@ -135,6 +135,31 @@
         </gantt-chart-component>
         ```
 
+### `links`オブジェクトの`options`プロパティ
+
+タスク間のリンク線も、`options`プロパティで見た目をカスタマイズできます。`links`配列内の各オブジェクトに`options`キーを追加してください。
+
+| オプション名                       | 説明                               |
+| :------------------------------- | :--------------------------------- |
+| `managed-link-color-red`         | リンク線を赤色にします。           |
+| `managed-link-color-green`       | リンク線を緑色にします。           |
+| `managed-link-style-dashed`      | リンク線を破線にします。           |
+| `managed-link-style-solid`       | リンク線を実線にします。           |
+| `managed-link-weight-bold`       | リンク線を太くします (3px)。       |
+| `managed-link-weight-medium`     | リンク線を中間の太さにします (1.5px)。 |
+| `managed-link-weight-thin`       | リンク線を細くします (0.5px)。     |
+
+*   **使用例:**
+    ```json
+    "links": [
+      { 
+        "source": "タスクID1", 
+        "target": "タスクID2", 
+        "options": ["managed-link-color-red", "managed-link-style-dashed", "managed-link-weight-bold"] 
+      }
+    ]
+    ```
+
 ## テスト
 
 このプロジェクトにはJestを使用したテストスイートが含まれています。テストを実行するには、以下のコマンドを使用します。
