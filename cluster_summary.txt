@@ -1,19 +1,21 @@
-あなたはデータ分析とPythonプログラミングの専門家です。  
-次の仕様に基づき、製造実績データから最適な基準テーブルを自動生成するPythonスクリプトを作成してください。
+あなたはデータ分析・機械学習に精通したエンジニアです。
+次の仕様でPythonスクリプトを作成してください。
 
-【仕様】
-- CSVを読み込み（speed, width, type, quality_score）
-- 外れ値除外（IsolationForest）
-- K-meansクラスタリング（Elbow法でクラスタ数自動決定）
-- 各クラスタのspeed分散を算出し、最も分散が小さい組み合わせを安定クラスタと判定
-- 結果を表とグラフ（散布図・箱ひげ図）で出力
-- 出力先: ./output/
-- 主要ライブラリ: pandas, scikit-learn, matplotlib, seaborn
-- コメントは日本語で丁寧に記述すること
+【目的】
+speedの分散を最小化する項目組み合わせを探索し、安定的な基準スピードテーブルを生成する。
 
-【出力ファイル】
-1. cluster_summary.csv（クラスタごとの平均・分散・安定度）
-2. scatter_clusters.png（クラスタ散布図）
-3. boxplot_clusters.png（箱ひげ図）
+【要件】
+1. CSVを読み込み（列例：speed, width, type, temperature, quality_score）
+2. quality_score > 0.8 のデータのみ利用
+3. 説明変数候補（width, type, temperature）の全組み合わせを試す
+4. 各組み合わせで DecisionTreeRegressor を学習し、葉ノードごとのspeed分散を算出
+5. 全葉平均分散と平均品質を算出してcombo_summary.csvに出力
+6. 最小分散の組み合わせで基準テーブルを生成
+7. 散布図・箱ひげ図を作成しPNG出力
+8. コメントはすべて日本語で
 
-このスクリプトは他データにも再利用可能な構造にしてください。
+【出力】
+- ./output/combo_summary.csv
+- ./output/optimal_baseline_table.csv
+- ./output/scatter_best_combo.png
+- ./output/boxplot_best_combo.png
