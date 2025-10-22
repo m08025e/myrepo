@@ -1,0 +1,19 @@
+あなたはデータ分析とPythonプログラミングの専門家です。  
+次の仕様に基づき、製造実績データから最適な基準テーブルを自動生成するPythonスクリプトを作成してください。
+
+【仕様】
+- CSVを読み込み（speed, width, type, quality_score）
+- 外れ値除外（IsolationForest）
+- K-meansクラスタリング（Elbow法でクラスタ数自動決定）
+- 各クラスタのspeed分散を算出し、最も分散が小さい組み合わせを安定クラスタと判定
+- 結果を表とグラフ（散布図・箱ひげ図）で出力
+- 出力先: ./output/
+- 主要ライブラリ: pandas, scikit-learn, matplotlib, seaborn
+- コメントは日本語で丁寧に記述すること
+
+【出力ファイル】
+1. cluster_summary.csv（クラスタごとの平均・分散・安定度）
+2. scatter_clusters.png（クラスタ散布図）
+3. boxplot_clusters.png（箱ひげ図）
+
+このスクリプトは他データにも再利用可能な構造にしてください。
